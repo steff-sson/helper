@@ -1,0 +1,13 @@
+# Kopiere diese Datei nach /etc/systemd/system/
+[Unit]
+Description=dts-convert Service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=stef
+Group=net
+ExecStart=~/github/helper/dts-convert/dts-convert.sh
+
+[Install]
+WantedBy=multi-user.target
