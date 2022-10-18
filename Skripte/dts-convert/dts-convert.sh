@@ -5,7 +5,7 @@
 path=/volume1/video/
 
 # define location of logfile
-log=/var/log/dts-convert.log
+log=/home/$USER/dts-convert.log
 
 ## needed variables for loop and recursive scan
 # globstar
