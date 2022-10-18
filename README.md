@@ -15,14 +15,18 @@ Ein Skript, das in einem bestimmbaren Ordner rekursiv nach *.mkv Dateien sucht, 
 Das Skript wird über einen Systemd-Timer täglich aufgerufen.
 
 **Klone das Repository**
+
 `git clone https://github.com/steff-sson/helper.git`
 
 **Mache notwendige Änderungen an dts-convert.sh**
+
 (z.B. zu durchsuchenden Pfad und Log-Location)
 `nano helper/dts-convert/dts-convert.sh`
 
 **Kopiere den Systemd-Service und -Timer**
+
 `sudo cp helper/dts-convert/dts-convert.service /etc/systemd/system/ && sudo cp helper/dts-convert/dts-convert.timer /etc/systemd/system/`
 
 **Installiere den Systemd-Timer**
+
 `sudo systemctl enable dts-convert.timer`
