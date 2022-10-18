@@ -4,7 +4,7 @@ Description=dts-convert Service für dts-convert.sh
 Wants=network-online.target
 
 [Service]
-Type=oneshot
+Type=simple
 User=stef
 Group=net
 ExecStart=/home/stef/github/helper/Skripte/dts-convert/dts-convert.sh
