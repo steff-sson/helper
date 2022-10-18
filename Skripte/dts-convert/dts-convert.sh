@@ -20,7 +20,7 @@ do
  if ffprobe -v error -select_streams a:0 -show_entries stream=codec_name -of csv=p=0 "$f" | grep dts; then
    ((dts_check=dts_check+1))
    echo $(date -u) "$f gefunden und gespeichert, starte AC3 Re-Encode..." >> $log
-   ffmpeg -i "$f" -c:v copy -c:a ac3 -b:a 640k "${f%.mkv}-ac3.mkv"
+   ffmpeg -i "$f" -map 0 -map -0:s -c:v copy -c:a ac3 -b:a 640k "${f%.mkv}-ac3.mkv"
    echo $(date -u) "AC3 Re-Encode abgeschlossen. Entferne Original-MKV und ersetze sie durch neue MKV." >> $log
    # rm "$f"
    mv "${f%.mkv}-ac3.mkv" "$f"
