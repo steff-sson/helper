@@ -21,11 +21,11 @@ Das Skript wird über einen Systemd-Timer täglich aufgerufen.
 **Mache notwendige Änderungen an dts-convert.sh**
 (z.B. zu durchsuchenden Pfad und Log-Location)
 
-`nano helper/dts-convert/dts-convert.sh`
+`nano helper/Skripte/dts-convert/dts-convert.sh`
 
 **Kopiere den Systemd-Service und -Timer**
 
-```sudo cp helper/dts-convert/dts-convert.service /etc/systemd/system/ && sudo cp helper/dts-convert/dts-convert.timer /etc/systemd/system/```
+```sudo cp helper/Skripte/dts-convert/dts-convert.service /etc/systemd/system/ && sudo cp helper/Skripte/dts-convert/dts-convert.timer /etc/systemd/system/```
 
 **Installiere den Systemd-Timer**
 
