@@ -1,5 +1,5 @@
 # Helper
-Kleine Hilfsskripte und -programm, die den Alltag erleichtern und Backups einfacher ermöglichen (siehe [btrbk-home-clients](https://github.com/steff-sson/btrbk-home-clients))
+Kleine Hilfsskripte und -programme, die den Alltag (eines Media-Servers) erleichtern und Backups einfacher ermöglichen (siehe [btrbk-home-clients](https://github.com/steff-sson/btrbk-home-clients))
 
 ## hooks
 Pacman Hooks können vor, während oder nach der Installation von Paketen mit Pacman ausgeführt werden.
@@ -30,7 +30,9 @@ Das Skript wird über einen Systemd-Timer täglich aufgerufen.
 
 **Kopiere den Systemd-Service und -Timer**
 
-```sudo cp Skripte/dts-convert/dts-convert.service /etc/systemd/system/ && sudo cp Skripte/dts-convert/dts-convert.timer /etc/systemd/system/```
+```
+sudo cp Skripte/dts-convert/dts-convert.service /etc/systemd/system/ && sudo cp Skripte/dts-convert/dts-convert.timer /etc/systemd/system/
+```
 
 **Installiere den Systemd-Timer**
 
