@@ -1,6 +1,6 @@
 # Kopiere diese Datei nach /etc/systemd/system/
 [Unit]
-Description=dts-convert Service
+Description=dts-convert Service für dts-convert.sh
 Wants=network-online.target
 
 [Service]
