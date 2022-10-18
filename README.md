@@ -21,7 +21,12 @@ Das Skript wird über einen Systemd-Timer täglich aufgerufen.
 **Mache notwendige Änderungen an dts-convert.sh**
 (z.B. zu durchsuchenden Pfad und Log-Location)
 
-`nano helper/Skripte/dts-convert/dts-convert.sh`
+`nano Skripte/dts-convert/dts-convert.sh`
+
+**Mache notwendige Änderungen an dts-convert.service**
+(z.B. Pfad zu dts-convert.sh)
+
+`nano Skripte/dts-convert/dts-convert.service`
 
 **Kopiere den Systemd-Service und -Timer**
 
