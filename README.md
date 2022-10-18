@@ -16,7 +16,7 @@ Das Skript wird über einen Systemd-Timer täglich aufgerufen.
 
 **Klone das Repository**
 
-`git clone https://github.com/steff-sson/helper.git`
+`git clone https://github.com/steff-sson/helper.git && cd helper`
 
 **Mache notwendige Änderungen an dts-convert.sh**
 (z.B. zu durchsuchenden Pfad und Log-Location)
@@ -25,7 +25,7 @@ Das Skript wird über einen Systemd-Timer täglich aufgerufen.
 
 **Kopiere den Systemd-Service und -Timer**
 
-```sudo cp helper/Skripte/dts-convert/dts-convert.service /etc/systemd/system/ && sudo cp helper/Skripte/dts-convert/dts-convert.timer /etc/systemd/system/```
+```sudo cp Skripte/dts-convert/dts-convert.service /etc/systemd/system/ && sudo cp Skripte/dts-convert/dts-convert.timer /etc/systemd/system/```
 
 **Installiere den Systemd-Timer**
 
