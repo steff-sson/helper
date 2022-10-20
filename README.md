@@ -6,6 +6,13 @@ Pacman Hooks können vor, während oder nach der Installation von Paketen mit Pa
 ### pkglist-post-install
 Dieser Hook schreibt eine aktuelle Liste installierter Pakte nach /home/pkglist.txt (siehe [archwiki](https://wiki.archlinux.org/title/Pacman#Hooks))
 #### Installation
+
+**Klone das Repository**
+
+`git clone https://github.com/steff-sson/helper.git && cd helper`
+
+**Kopiere den Hook für Pacman**
+
 `sudo cp hooks/pkglist-post-install.hook /usr/share/libalpm/hooks/`
 
 ## configs
