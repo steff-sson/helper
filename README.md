@@ -31,7 +31,9 @@ Konfigurationsdatei für [https://github.com/kdave/btrfsmaintenance](btrfsmainte
 
 **Aktiviere die Systemd-Timer**
 
-`sudo systemctl enable btrfs-balance.timer && sudo systemctl enable btrfs-scrub.timer && sudo systemctl enable btrfs-trim.timer &&`
+```
+sudo systemctl enable btrfs-balance.timer && sudo systemctl enable btrfs-scrub.timer && sudo systemctl enable btrfs-trim.timer
+```
 
 ## skripte
 ### dts-convert
