@@ -16,11 +16,6 @@ Konfigurationsdatei für [https://github.com/kdave/btrfsmaintenance](btrfsmainte
 
 `git clone https://github.com/steff-sson/helper.git && cd helper`
 
-**Mache notwendige Änderungen an btrfsmaintenance**
-(z.B. zu durchsuchenden Pfad und Log-Location)
-
-`nano configs/btrfsmaintenance`
-
 **Installiere das AUR-Paket btrfsmaintenance**
 
 `yay btrfsmaintenance`
@@ -28,6 +23,11 @@ Konfigurationsdatei für [https://github.com/kdave/btrfsmaintenance](btrfsmainte
 **Kopiere die Konfigurationsdatei**
 
 `sudo cp configs/btrfsmaintenance /etc/default/`
+
+**Mache notwendige Änderungen an btrfsmaintenance**
+(z.B. zu durchsuchenden Pfad und Log-Location)
+
+`sudo nano /etc/default/btrfsmaintenance`
 
 **Aktiviere die Systemd-Timer**
 
