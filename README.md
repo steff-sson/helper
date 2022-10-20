@@ -62,6 +62,12 @@ Das Skript wird über einen Systemd-Timer täglich aufgerufen.
 
 `nano skripte/dts-convert/dts-convert.service`
 
+**Installiere notwendige Abhänigkeiten (Arch)**
+
+```
+sudo pacmen -Sy && sudo pacman -S ffmpeg
+```
+
 **Kopiere den Systemd-Service und -Timer**
 
 ```
