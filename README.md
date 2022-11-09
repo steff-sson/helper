@@ -15,6 +15,10 @@ Dieser Hook schreibt eine aktuelle Liste installierter Pakte nach /home/pkglist.
 
 `sudo cp hooks/pkglist-post-install.hook /usr/share/libalpm/hooks/`
 
+**Lege die eine symbolische Verknüpfung in dein User-Home**
+
+`ln -s /home/pkglist.txt /home/$USER/pkglist.txt`
+
 ## configs
 ### btrfsmaintenance
 Konfigurationsdatei für [https://github.com/kdave/btrfsmaintenance](btrfsmaintenance). Hier werden **balance**, **scrub** und **trim** automatisch durchgeführt und in `/etc/default/btrfsmaintenance` konfiguriert.
