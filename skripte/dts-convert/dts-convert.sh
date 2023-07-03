@@ -28,17 +28,16 @@ do
    # rm "$f"
    mv "${f%.mkv}-ac3.mkv" "$f"
    echo "$date: Fertig!" >> $log
- else
-   if ffprobe -v error -select_streams a:1 -show_entries stream=codec_name -of csv=p=0 "$f" | grep dts;
-   then
-     ((dts_check=dts_check+1))
-     echo "$date: $f gefunden und gespeichert, starte AC3 Re-Encode..." >> $log
-     ffmpeg -i "$f" -map 0 -map -0:s -c:v copy -c:a ac3 -b:a 640k "${f%.mkv}-ac3.mkv"
-     echo "$date: AC3 Re-Encode abgeschlossen. Entferne Original-MKV und ersetze sie durch neue MKV." >> $log
-     # rm "$f"
-     mv "${f%.mkv}-ac3.mkv" "$f"
-     echo "$date: Fertig!" >> $log
-  fi
+ fi
+ if ffprobe -v error -select_streams a:1 -show_entries stream=codec_name -of csv=p=0 "$f" | grep dts;
+ then
+   ((dts_check=dts_check+1))
+   echo "$date: $f gefunden und gespeichert, starte AC3 Re-Encode..." >> $log
+   ffmpeg -i "$f" -map 0 -map -0:s -c:v copy -c:a ac3 -b:a 640k "${f%.mkv}-ac3.mkv"
+   echo "$date: AC3 Re-Encode abgeschlossen. Entferne Original-MKV und ersetze sie durch neue MKV." >> $log
+   # rm "$f"
+   mv "${f%.mkv}-ac3.mkv" "$f"
+   echo "$date: Fertig!" >> $log
  fi
 done
 
