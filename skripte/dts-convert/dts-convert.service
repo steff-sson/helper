@@ -7,7 +7,7 @@ Wants=network-online.target
 Type=simple
 User=stef
 Group=net
-ExecStart=/home/stef/github/helper/Skripte/dts-convert/dts-convert.sh
+ExecStart=/home/stef/github/helper/skripte/dts-convert/dts-convert.sh
 
 [Install]
 WantedBy=multi-user.target
