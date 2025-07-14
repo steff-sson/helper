@@ -3,8 +3,10 @@ Kleine Hilfsskripte und -programme, die den Alltag (eines Media-Servers) erleich
 
 ## hooks
 Pacman Hooks können vor, während oder nach der Installation von Paketen mit Pacman ausgeführt werden.
-### pkglist-post-install
-Dieser Hook schreibt eine aktuelle Liste installierter Pakte nach /home/pkglist.txt (siehe [archwiki](https://wiki.archlinux.org/title/Pacman#Hooks))
+### pkglists
+Dieses Hooks schreiben eine aktuelle Liste installierter Pakte nach /home/pkglist.txt sowie home/pkglist-AUR.txt.
+
+siehe [archwiki](https://wiki.archlinux.org/title/Pacman#Hooks))
 #### Installation
 
 **Klone das Repository**
@@ -13,7 +15,7 @@ Dieser Hook schreibt eine aktuelle Liste installierter Pakte nach /home/pkglist.
 
 **Kopiere den Hook für Pacman**
 
-`sudo cp hooks/pkglist-post-install.hook /usr/share/libalpm/hooks/`
+`sudo mkdir /etc/pacman.d/hooks && sudo cp hooks/* /etc/pacman.d/hooks/`
 
 **Lege die eine symbolische Verknüpfung in dein User-Home**
 

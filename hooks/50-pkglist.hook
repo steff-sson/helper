@@ -1,0 +1,11 @@
+[Trigger]
+Operation = Install
+Operation = Remove
+Operation = Upgrade
+Type = Package
+Target = *
+
+[Action]
+Description = Description = Create a backup list of all installed packages
+When = PostTransaction
+Exec = /bin/sh -c '/usr/bin/pacman -Qqetn > /home/pkglist.txt'
