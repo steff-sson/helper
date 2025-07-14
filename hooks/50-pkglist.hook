@@ -6,6 +6,6 @@ Type = Package
 Target = *
 
 [Action]
-Description = Description = Create a backup list of all installed packages
+Description = Create a backup list of all installed packages
 When = PostTransaction
-Exec = /bin/sh -c '/usr/bin/pacman -Qqetn > /home/pkglist.txt'
+Exec = /bin/sh -c '/usr/bin/pacman -Qqetn > /home/pkglist.txt; /usr/bin/pacman -Qqem > /home/pkglist-AUR.txt'

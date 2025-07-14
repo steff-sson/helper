@@ -4,7 +4,7 @@ Kleine Hilfsskripte und -programme, die den Alltag (eines Media-Servers) erleich
 ## hooks
 Pacman Hooks können vor, während oder nach der Installation von Paketen mit Pacman ausgeführt werden.
 ### pkglists
-Dieses Hooks schreiben eine aktuelle Liste installierter Pakte nach /home/pkglist.txt sowie home/pkglist-AUR.txt.
+Dieses Hook schreibt eine aktuelle Liste installierter Pakte nach /home/pkglist.txt sowie home/pkglist-AUR.txt.
 
 siehe [archwiki](https://wiki.archlinux.org/title/Pacman#Hooks))
 #### Installation
