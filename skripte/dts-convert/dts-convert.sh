@@ -15,17 +15,17 @@ dts_check=0
 current_file=""
 
 # Abhängigkeiten prüfen
-command -v jq     >/dev/null 2>&1 || { echo "jq nicht installiert!";     exit 1; }
-command -v ffmpeg >/dev/null 2>&1 || { echo "ffmpeg nicht installiert!"; exit 1; }
-command -v ffprobe>/dev/null 2>&1 || { echo "ffprobe nicht installiert!";exit 1; }
-command -v lsof   >/dev/null 2>&1 || { echo "lsof nicht installiert!";   exit 1; }
+command -v jq      >/dev/null 2>&1 || { echo "jq nicht installiert!";      exit 1; }
+command -v ffmpeg  >/dev/null 2>&1 || { echo "ffmpeg nicht installiert!";  exit 1; }
+command -v ffprobe >/dev/null 2>&1 || { echo "ffprobe nicht installiert!"; exit 1; }
+command -v lsof    >/dev/null 2>&1 || { echo "lsof nicht installiert!";    exit 1; }
 
 # Lockfile gegen Doppelstart
 lockfile="/tmp/dts-convert.lock"
 [ -f "$lockfile" ] && { echo "Skript läuft bereits – Abbruch."; exit 1; }
 touch "$lockfile"
 
-# Trap: Lockfile + ggf. halb-fertige Temp-Datei aufräumen (Fix #9)
+# Trap: Lockfile + ggf. halb-fertige Temp-Datei aufräumen
 trap '
   rm -f "$lockfile"
   [ -n "$current_file" ] && rm -f "${current_file%.mkv}-ac3.mkv"
@@ -40,13 +40,13 @@ if [ -f "$log" ]; then
   || rm -f "${log}.tmp"
 fi
 
-# Pfade prüfen (Fix #8)
+# Pfade prüfen
 for p in "${paths[@]}"; do
   [ -d "$p" ] || echo "$(ts): WARNUNG – Pfad nicht gefunden: $p" >> "$log"
 done
 
 while IFS= read -r -d '' f; do
-  current_file="$f"  # Für Trap (Fix #9)
+  current_file="$f"
 
   # Race Condition: Datei gerade in Verwendung?
   if lsof -- "$f" >/dev/null 2>&1; then
@@ -60,7 +60,7 @@ while IFS= read -r -d '' f; do
     continue
   fi
 
-  # ffprobe einmalig cachen (Fix #1: schließende } ergänzt)
+  # ffprobe einmalig cachen
   probe=$(ffprobe -v error -print_format json \
     -show_entries stream=index,codec_name,codec_type,tags=title,language \
     -- "$f" 2>/dev/null) || {
@@ -95,10 +95,11 @@ while IFS= read -r -d '' f; do
     fi
 
     # FFmpeg-Argumente als Array
-    ffmpeg_args=(-i "$f")
+    # fix_sub_duration + analyzeduration/probesize müssen VOR -i stehen (Input-Optionen)
+    ffmpeg_args=(-fix_sub_duration -analyzeduration 100M -probesize 100M -i "$f")
     ffmpeg_args+=(-map 0:v -map 0:a -map "0:s?" -map "0:d?")
     ffmpeg_args+=(-c:v copy -c:s copy -c:a copy -c:d copy)
-    ffmpeg_args+=(-fix_sub_duration -max_muxing_queue_size 1024)
+    ffmpeg_args+=(-max_muxing_queue_size 1024)
 
     audio_index=0
 
@@ -108,16 +109,10 @@ while IFS= read -r -d '' f; do
       lang="${lang:-und}"
 
       if [ "$codec" = "dts" ] || [ "$codec" = "truehd" ] || [ "$codec" = "opus" ]; then
-        # Fix #7: Opus-Stereo bekommt sinnvolle Bitrate statt Overkill-640k
-        if [ "$codec" = "opus" ]; then
-          bitrate="192k"
-        else
-          bitrate="640k"
-        fi
-        ffmpeg_args+=(-c:a:$audio_index ac3 -b:a:$audio_index "$bitrate")
+        ffmpeg_args+=(-c:a:$audio_index ac3 -b:a:$audio_index 640k)
         ffmpeg_args+=(-metadata:s:a:$audio_index "title=${orig_title} (AC3 Reencode)")
         ffmpeg_args+=(-metadata:s:a:$audio_index "language=$lang")
-        echo "$(ts): a:$audio_index ($codec) -> AC3 ${bitrate}: '${orig_title} (AC3 Reencode)' [$lang]" >> "$log"
+        echo "$(ts): a:$audio_index ($codec) -> AC3 640k: '${orig_title} (AC3 Reencode)' [$lang]" >> "$log"
       fi
 
       audio_index=$((audio_index + 1))
@@ -125,9 +120,8 @@ while IFS= read -r -d '' f; do
       '.streams[] | select(.codec_type=="audio") |
       [.codec_name, (.tags.title // ""), (.tags.language // "")] | @tsv')
 
-    # FFmpeg ausführen (Fix #2: ffmpeg_exit initialisiert, Fix #3: vollständiger Aufruf)
+    # FFmpeg ausführen
     ffmpeg_exit=0
-    # Fix #4: PIPESTATUS[0] statt pipefail+grep-Exit-Code
     ffmpeg "${ffmpeg_args[@]}" "${f%.mkv}-ac3.mkv" 2>&1 | grep -iv "mjpeg" >> "$log"
     ffmpeg_exit=${PIPESTATUS[0]}
 
@@ -148,7 +142,7 @@ while IFS= read -r -d '' f; do
 
     # Atomic Replace
     mv -- "${f%.mkv}-ac3.mkv" "$f"
-    current_file=""  # Erfolgreich abgeschlossen – Trap soll nicht löschen
+    current_file=""  # Erfolgreich – Trap soll nicht löschen
     delta=$((orig_size - new_size))
     pct=$((delta * 100 / orig_size))
     echo "$(ts): Fertig. Ersparnis: ${delta}B (-${pct}%). Audio-Tracks: $audio_index." >> "$log"
