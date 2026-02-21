@@ -91,7 +91,7 @@ while IFS= read -r -d '' f; do
       orig_title="${orig_title:-Audio}"
       lang="${lang:-und}"
 
-      if [ "$codec" = "dts" ] || [ "$codec" = "truehd" ]; then
+      if [ "$codec" = "dts" ] || [ "$codec" = "truehd" ] || [ "$codec" = "opus" ]; then
         ffmpeg_args+=(-c:a:$audio_index ac3 -b:a:$audio_index 640k)
         ffmpeg_args+=(-metadata:s:a:$audio_index "title=${orig_title} (AC3 Reencode)")
         ffmpeg_args+=(-metadata:s:a:$audio_index "language=$lang")
