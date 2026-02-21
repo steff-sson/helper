@@ -177,5 +177,7 @@ while IFS= read -r -d '' f; do
 
 done < <(find -L "${paths[@]}" -name "*.mkv" -print0 2>/dev/null)
 
+current_file=""  # ← Verhindert Trap-Fehlermeldung beim EXIT
+
 [ $dts_check -eq 0 ] && echo "$(ts): Kein DTS/TrueHD/Opus gefunden." >> "$log"
 echo "$(ts): Scan abgeschlossen. $dts_check Dateien konvertiert, $skip_count übersprungen (xattr-Cache)." >> "$log"
