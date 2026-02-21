@@ -3,13 +3,11 @@
 # DTS-to-AC3 Converter (Optimiert für Multi-Track + Google TV)
 path=/volume1/video/
 log=/home/$USER/dts-convert.log
-shopt -s globstar
+# shopt -s globstar
 dts_check=0
 date=$(date '+%Y-%m-%d %H:%M:%S')
-folder="$path**/*.mkv"
-temp="${f%.mkv}-temp.mkv"
 
-for f in $folder; do
+while IFS= read -r -d '' f; do
   # JSON-Analyse aller Audio-Tracks
   tracks=$(ffprobe -v error -print_format json -show_entries stream=index,codec_name,tags=title,language "$f" | jq -r '.streams[] | select(.codec_name=="dts") | .index')
   
@@ -42,12 +40,12 @@ for f in $folder; do
     
     # Atomic Replace + Size Check
     orig_size=$(stat -c%s "$f")
+    new_size=$(stat -c%s "${f%.mkv}-ac3.mkv")
     mv "${f%.mkv}-ac3.mkv" "$f"
-    new_size=$(stat -c%s "$f")
     delta=$((new_size - orig_size))
     echo "$date: $f fertig. Größe: ${delta}B ($((delta * 100 / orig_size))%). DTS: $dts_count Tracks." >> $log
   fi
-done
+done < <(find "$path" -name "*.mkv" -print0)
 
 [ $dts_check -eq 0 ] && echo "$date: Kein DTS gefunden." >> $log
 echo "$date: Scan abgeschlossen. $dts_check Dateien bearbeitet." >> $log
