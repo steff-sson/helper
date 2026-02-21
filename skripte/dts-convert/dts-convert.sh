@@ -1,56 +1,72 @@
 #!/bin/bash
 
-# DTS/TrueHD-to-AC3 Converter (Optimiert für Multi-Track + Google TV)
+# DTS/TrueHD-to-AC3 Converter (Final - Multi-Track + Google TV + Renaming)
 path=/volume1/video/
 log=/home/$USER/dts-convert.log
 dts_check=0
 date=$(date '+%Y-%m-%d %H:%M:%S')
 
 while IFS= read -r -d '' f; do
-  # JSON-Analyse aller Audio-Tracks (DTS + TrueHD)
-  tracks=$(ffprobe -v error -print_format json -show_entries stream=index,codec_name,tags=title,language "$f" \
+
+  # Alle DTS/TrueHD-Tracks finden (Index relativ zu allen Streams)
+  tracks=$(ffprobe -v error -print_format json \
+    -show_entries stream=index,codec_name,tags=title,language "$f" \
     | jq -r '.streams[] | select(.codec_name=="dts" or .codec_name=="truehd") | .index')
 
-  if [ "$tracks" != "null" ] && [ -n "$tracks" ]; then
+  if [ -n "$tracks" ] && [ "$tracks" != "null" ]; then
     ((dts_check++))
-    echo "$date: DTS/TrueHD-Tracks in $f ($tracks), starte Conversion..." >> $log
+    echo "$date: Gefunden: $f" >> $log
+    echo "$date: DTS/TrueHD-Tracks (Stream-Index): $tracks" >> $log
 
-    # Dynamisches Mapping bauen
-    map_cmd="-map 0:v -map 0:s? -map 0:d? -c:v copy -c:s copy -c:d copy"
-    audio_cmd=""
-    dts_count=0
+    # Basis: alles copy
+    codec_cmd="-c:v copy -c:s copy -c:a copy -c:d copy"
+    meta_cmd=""
+    
+    # Audio-Index-Zähler (relativ nur zu Audio-Streams)
+    audio_index=0
 
-    while IFS= read -r dts_idx; do
-      if [ -n "$dts_idx" ]; then
-        orig_title=$(ffprobe -v error -select_streams a:$dts_idx -show_entries stream_tags=title -of csv=p=0 "$f" 2>/dev/null || echo "Audio")
-        lang=$(ffprobe -v error -select_streams a:$dts_idx -show_entries stream_tags=language -of csv=p=0 "$f" 2>/dev/null || echo "und")
-        map_cmd="$map_cmd -map 0:a:$dts_idx"
-        audio_cmd="$audio_cmd -c:a:$dts_count ac3 -b:a 640k -metadata:s:a.$dts_count title=\"$orig_title (AC3 Reencode)\" -metadata:s:a.$dts_count language=$lang"
-        ((dts_count++))
+    # Alle Audio-Streams durchlaufen
+    while IFS= read -r stream; do
+      stream_index=$(echo "$stream" | jq -r '.index')
+      codec=$(echo "$stream" | jq -r '.codec_name')
+      orig_title=$(echo "$stream" | jq -r '.tags.title // "Audio"')
+      lang=$(echo "$stream" | jq -r '.tags.language // "und"')
+
+      if [ "$codec" = "dts" ] || [ "$codec" = "truehd" ]; then
+        # Re-encode + Rename
+        codec_cmd="$codec_cmd -c:a:$audio_index ac3 -b:a:$audio_index 640k"
+        meta_cmd="$meta_cmd -metadata:s:a:$audio_index title=\"${orig_title} (AC3 Reencode)\" -metadata:s:a:$audio_index language=$lang"
+        echo "$date:   Track a:$audio_index ($codec) -> AC3: '${orig_title} (AC3 Reencode)' [$lang]" >> $log
       fi
-    done <<< "$tracks"
 
-    # Non-DTS/TrueHD Audio copy
-    map_cmd="$map_cmd -map 0:a -c:a copy"
+      ((audio_index++))
+    done < <(ffprobe -v error -print_format json \
+      -show_entries stream=index,codec_name,tags=title,language "$f" \
+      | jq -c '.streams[] | select(.codec_type=="audio" or (.codec_name | test("dts|truehd|ac3|eac3|aac|opus")))')
 
-    # FFmpeg Aufruf (MJPEG-Warning unterdrückt, Fehlercheck)
-    ffmpeg -i "$f" $map_cmd $audio_cmd \
+    # FFmpeg ausführen
+    eval ffmpeg -i \"$f\" \
+      -map 0:v -map '"0:a"' -map '"0:s?"' -map '"0:d?"' \
+      $codec_cmd \
+      $meta_cmd \
       -avoid_negative_ts make_zero \
-      "${f%.mkv}-ac3.mkv" -y \
-      -loglevel error 2>&1 | grep -iv "mjpeg"
+      \"${f%.mkv}-ac3.mkv\" -y \
+      -loglevel error 2>&1 | grep -iv "mjpeg" >> $log
 
     # Prüfen ob Output existiert
     if [ ! -f "${f%.mkv}-ac3.mkv" ]; then
-      echo "$date: FEHLER – FFmpeg hat keine Ausgabedatei erzeugt für $f" >> $log
+      echo "$date: FEHLER – FFmpeg fehlgeschlagen für $f" >> $log
       continue
     fi
 
-    # Atomic Replace + Size Check
+    # Size Check + Atomic Replace
     orig_size=$(stat -c%s "$f")
     new_size=$(stat -c%s "${f%.mkv}-ac3.mkv")
     mv "${f%.mkv}-ac3.mkv" "$f"
-    delta=$((new_size - orig_size))
-    echo "$date: $f fertig. Größe: ${delta}B ($((delta * 100 / orig_size))%). Tracks: $dts_count." >> $log
+    delta=$((orig_size - new_size))
+    pct=$((delta * 100 / orig_size))
+    echo "$date: Fertig. Ersparnis: ${delta}B (-${pct}%). Tracks: $audio_index." >> $log
+
   fi
 
 done < <(find "$path" -name "*.mkv" -print0)
