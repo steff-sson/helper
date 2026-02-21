@@ -1,67 +1,53 @@
 #!/bin/bash
-# DTS conversion script
 
-# define folder to search for *.mkv files (will be search recursively!)
+# DTS-to-AC3 Converter (Optimiert für Multi-Track + Google TV)
 path=/volume1/video/
-
-# define location of logfile
 log=/home/$USER/dts-convert.log
-
-## needed variables for loop and recursive scan
-# globstar
 shopt -s globstar
-# temp variable for DTS-check
 dts_check=0
-# Date Variable für numeric date code
 date=$(date '+%Y-%m-%d %H:%M:%S')
-# temporary variable based on folder for loop
 folder="$path**/*.mkv"
+temp="${f%.mkv}-temp.mkv"
 
-for f in $folder
-do
- if ffprobe -v error -select_streams a:0 -show_entries stream=codec_name -of csv=p=0 "$f" | grep dts;
- then
-   ((dts_check=dts_check+1))
-   echo "$date: $f gefunden und gespeichert, starte AC3 Re-Encode..." >> $log
-   ffmpeg -i "$f" -map 0 -map -0:s -c:v copy -c:a ac3 -b:a 640k "${f%.mkv}-ac3.mkv"
-   echo "$date: AC3 Re-Encode abgeschlossen. Entferne Original-MKV und ersetze sie durch neue MKV." >> $log
-   # rm "$f"
-   mv "${f%.mkv}-ac3.mkv" "$f"
-   echo "$date: Fertig!" >> $log
- fi
- if ffprobe -v error -select_streams a:1 -show_entries stream=codec_name -of csv=p=0 "$f" | grep dts;
- then
-   ((dts_check=dts_check+1))
-   echo "$date: $f gefunden und gespeichert, starte AC3 Re-Encode..." >> $log
-   ffmpeg -i "$f" -map 0 -map -0:s -c:v copy -c:a ac3 -b:a 640k "${f%.mkv}-ac3.mkv"
-   echo "$date: AC3 Re-Encode abgeschlossen. Entferne Original-MKV und ersetze sie durch neue MKV." >> $log
-   # rm "$f"
-   mv "${f%.mkv}-ac3.mkv" "$f"
-   echo "$date: Fertig!" >> $log
- fi
- if ffprobe -v error -select_streams a:0 -show_entries stream=codec_name -of csv=p=0 "$f" | grep eac3;
- then
-   ((dts_check=dts_check+1))
-   echo "$date: $f gefunden und gespeichert, starte AC3 Re-Encode..." >> $log
-   ffmpeg -i "$f" -map 0 -map -0:s -c:v copy -c:a ac3 -b:a 640k "${f%.mkv}-ac3.mkv"
-   echo "$date: AC3 Re-Encode abgeschlossen. Entferne Original-MKV und ersetze sie durch neue MKV." >> $log
-   # rm "$f"
-   mv "${f%.mkv}-ac3.mkv" "$f"
-   echo "$date: Fertig!" >> $log
- fi
- if ffprobe -v error -select_streams a:1 -show_entries stream=codec_name -of csv=p=0 "$f" | grep eac3;
- then
-   ((dts_check=dts_check+1))
-   echo "$date: $f gefunden und gespeichert, starte AC3 Re-Encode..." >> $log
-   ffmpeg -i "$f" -map 0 -map -0:s -c:v copy -c:a ac3 -b:a 640k "${f%.mkv}-ac3.mkv"
-   echo "$date: AC3 Re-Encode abgeschlossen. Entferne Original-MKV und ersetze sie durch neue MKV." >> $log
-   # rm "$f"
-   mv "${f%.mkv}-ac3.mkv" "$f"
-   echo "$date: Fertig!" >> $log
- fi
+for f in $folder; do
+  # JSON-Analyse aller Audio-Tracks
+  tracks=$(ffprobe -v error -print_format json -show_entries stream=index,codec_name,tags=title,language "$f" | jq -r '.streams[] | select(.codec_name=="dts") | .index')
+  
+  if [ "$tracks" != "null" ] && [ -n "$tracks" ]; then
+    ((dts_check++))
+    echo "$date: DTS-Tracks in $f ($tracks), starte Conversion..." >> $log
+    
+    # Dynamisches Mapping bauen
+    map_cmd="-map 0:v -map 0:s? -map 0:d?"  # Video, Subs, Data
+    audio_cmd=""
+    dts_count=0
+    
+    while IFS= read -r dts_idx; do
+      if [ -n "$dts_idx" ]; then
+        orig_title=$(ffprobe -v error -select_streams a:$dts_idx -show_entries stream_tags=title -of csv=p=0 "$f" 2>/dev/null || echo "DTS")
+        lang=$(ffprobe -v error -select_streams a:$dts_idx -show_entries stream_tags=language -of csv=p=0 "$f" 2>/dev/null || echo "und")
+        map_cmd="$map_cmd -map 0:a:$dts_idx"
+        audio_cmd="$audio_cmd -c:a:$dts_count ac3 -b:a 640k -metadata:s:a.$dts_count title=\"$orig_title (AC3 Reencode)\" -metadata:s:a.$dts_count language=$lang"
+        ((dts_count++))
+      fi
+    done <<< "$tracks"
+    
+    # Non-DTS Audio copy
+    map_cmd="$map_cmd -map 0:a -c:a copy"
+    
+    # FFmpeg Aufruf
+    ffmpeg -i "$f" $map_cmd $audio_cmd \
+      -avoid_negative_ts make_zero \
+      "${f%.mkv}-ac3.mkv" -y -loglevel error
+    
+    # Atomic Replace + Size Check
+    orig_size=$(stat -c%s "$f")
+    mv "${f%.mkv}-ac3.mkv" "$f"
+    new_size=$(stat -c%s "$f")
+    delta=$((new_size - orig_size))
+    echo "$date: $f fertig. Größe: ${delta}B ($((delta * 100 / orig_size))%). DTS: $dts_count Tracks." >> $log
+  fi
 done
 
-if [[ $dts_check -eq 0 ]]
-then
-  echo "$date: Ich habe keine MKV-Datei(en) mit einer DTS-Tonspur in $path gefunden." >> $log
-fi
+[ $dts_check -eq 0 ] && echo "$date: Kein DTS gefunden." >> $log
+echo "$date: Scan abgeschlossen. $dts_check Dateien bearbeitet." >> $log
