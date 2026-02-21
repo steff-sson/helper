@@ -106,10 +106,12 @@ while IFS= read -r -d '' f; do
     fi
 
     # FFmpeg-Argumente als Array
-    ffmpeg_args=(-fix_sub_duration -analyzeduration 100M -probesize 100M -i "$f")
-    ffmpeg_args+=(-map 0:v -map 0:a -map "0:s?" -map "0:d?")
-    ffmpeg_args+=(-c:v copy -c:s copy -c:a copy -c:d copy)
-    ffmpeg_args+=(-max_muxing_queue_size 1024)
+    # -map 0:t? NICHT mappen – eingebettete Cover/Attachments verursachen "dimensions not set"
+    ffmpeg_args=(-fix_sub_duration -analyzeduration 200M -probesize 200M -i "$f")
+    ffmpeg_args+=(-map 0:v -map 0:a -map "0:s?")
+    ffmpeg_args+=(-c:v copy -c:s copy -c:a copy)
+    ffmpeg_args+=(-max_muxing_queue_size 2048)
+
 
     audio_index=0
 
