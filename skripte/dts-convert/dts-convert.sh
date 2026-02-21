@@ -37,9 +37,9 @@ trap '
 # Timestamp-Funktion
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
 
-# Log rotieren (max. 1000 Zeilen)
+# Log rotieren (max. 2000 Zeilen)
 if [ -f "$log" ]; then
-  tail -n 1000 "$log" > "${log}.tmp" && mv "${log}.tmp" "$log" \
+  tail -n 2000 "$log" > "${log}.tmp" && mv "${log}.tmp" "$log" \
   || rm -f "${log}.tmp"
 fi
 
@@ -106,12 +106,11 @@ while IFS= read -r -d '' f; do
     fi
 
     # FFmpeg-Argumente als Array
-    # -map 0:t? NICHT mappen – eingebettete Cover/Attachments verursachen "dimensions not set"
+    # 0:V:0 = nur echter Video-Stream, keine MJPEG-Cover-Attachments
     ffmpeg_args=(-fix_sub_duration -analyzeduration 200M -probesize 200M -i "$f")
-    ffmpeg_args+=(-map 0:v -map 0:a -map "0:s?")
+    ffmpeg_args+=(-map 0:V:0 -map 0:a -map "0:s?")
     ffmpeg_args+=(-c:v copy -c:s copy -c:a copy)
-    ffmpeg_args+=(-max_muxing_queue_size 2048)
-
+    ffmpeg_args+=(-max_muxing_queue_size 2048 -max_error_rate 1.0)
 
     audio_index=0
 
@@ -133,9 +132,16 @@ while IFS= read -r -d '' f; do
       [.codec_name, (.tags.title // ""), (.tags.language // "")] | @tsv')
 
     # FFmpeg ausführen
-    ffmpeg_exit=0
-    ffmpeg "${ffmpeg_args[@]}" "${f%.mkv}-ac3.mkv" 2>&1 | grep -iv "mjpeg" >> "$log"
+    ffmpeg "${ffmpeg_args[@]}" "${f%.mkv}-ac3.mkv" 2>&1 \
+      | grep -iv "mjpeg" > /tmp/dts-ffmpeg.tmp
     ffmpeg_exit=${PIPESTATUS[0]}
+
+    # Bei Fehler ODER ffmpeg-Warnungen (corrupt/error/invalid) ins Log
+    if [ "$ffmpeg_exit" -ne 0 ] || grep -qi "error\|corrupt\|invalid" /tmp/dts-ffmpeg.tmp; then
+      echo "$(ts): WARNUNG – ffmpeg meldete Fehler/Warnungen für $f" >> "$log"
+      cat /tmp/dts-ffmpeg.tmp >> "$log"
+    fi
+    rm -f /tmp/dts-ffmpeg.tmp
 
     # Output prüfen
     if [ "$ffmpeg_exit" -ne 0 ] || [ ! -f "${f%.mkv}-ac3.mkv" ]; then
@@ -156,7 +162,7 @@ while IFS= read -r -d '' f; do
     mv -- "${f%.mkv}-ac3.mkv" "$f"
     current_file=""  # Erfolgreich – Trap soll nicht löschen
 
-    # xattr nach erfolgreichem Replace neu setzen (Mtime hat sich durch mv geändert)
+    # xattr nach erfolgreichem Replace neu setzen
     new_mtime=$(stat -c%Y "$f")
     setfattr -n user.dts_check -v "$new_mtime" "$f"
 
