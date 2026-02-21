@@ -16,7 +16,7 @@ while IFS= read -r -d '' f; do
     echo "$date: DTS/TrueHD-Tracks in $f ($tracks), starte Conversion..." >> $log
 
     # Dynamisches Mapping bauen
-    map_cmd="-map 0:v -map 0:s? -map 0:d?"
+    map_cmd="-map 0:v -map 0:s? -map 0:d? -c:v copy -c:s copy -c:d copy"
     audio_cmd=""
     dts_count=0
 
