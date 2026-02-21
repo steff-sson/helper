@@ -3,7 +3,7 @@
 set -o pipefail
 set -u
 
-# DTS/TrueHD/Opus-to-AC3 Converter (Final - Multi-Track + Google TV + Renaming)
+# DTS/TrueHD/Opus-to-AC3 Converter (Final - Multi-Track + xattr-Cache)
 
 paths=(
   "/volume1/video/Filme"
@@ -12,13 +12,16 @@ paths=(
 
 log="/home/$USER/dts-convert.log"
 dts_check=0
+skip_count=0
 current_file=""
 
 # Abhängigkeiten prüfen
-command -v jq      >/dev/null 2>&1 || { echo "jq nicht installiert!";      exit 1; }
-command -v ffmpeg  >/dev/null 2>&1 || { echo "ffmpeg nicht installiert!";  exit 1; }
-command -v ffprobe >/dev/null 2>&1 || { echo "ffprobe nicht installiert!"; exit 1; }
-command -v lsof    >/dev/null 2>&1 || { echo "lsof nicht installiert!";    exit 1; }
+command -v jq       >/dev/null 2>&1 || { echo "jq nicht installiert!";      exit 1; }
+command -v ffmpeg   >/dev/null 2>&1 || { echo "ffmpeg nicht installiert!";  exit 1; }
+command -v ffprobe  >/dev/null 2>&1 || { echo "ffprobe nicht installiert!"; exit 1; }
+command -v lsof     >/dev/null 2>&1 || { echo "lsof nicht installiert!";    exit 1; }
+command -v setfattr >/dev/null 2>&1 || { echo "attr nicht installiert! (pacman -S attr)"; exit 1; }
+command -v getfattr >/dev/null 2>&1 || { echo "attr nicht installiert! (pacman -S attr)"; exit 1; }
 
 # Lockfile gegen Doppelstart
 lockfile="/tmp/dts-convert.lock"
@@ -47,6 +50,14 @@ done
 
 while IFS= read -r -d '' f; do
   current_file="$f"
+
+  # xattr-Cache prüfen: bereits geprüft und Mtime unverändert?
+  stored_mtime=$(getfattr -n user.dts_check --only-values "$f" 2>/dev/null || echo "")
+  current_mtime=$(stat -c%Y "$f")
+  if [ "$stored_mtime" = "$current_mtime" ]; then
+    skip_count=$((skip_count + 1))
+    continue
+  fi
 
   # Race Condition: Datei gerade in Verwendung?
   if lsof -- "$f" >/dev/null 2>&1; then
@@ -95,7 +106,6 @@ while IFS= read -r -d '' f; do
     fi
 
     # FFmpeg-Argumente als Array
-    # fix_sub_duration + analyzeduration/probesize müssen VOR -i stehen (Input-Optionen)
     ffmpeg_args=(-fix_sub_duration -analyzeduration 100M -probesize 100M -i "$f")
     ffmpeg_args+=(-map 0:v -map 0:a -map "0:s?" -map "0:d?")
     ffmpeg_args+=(-c:v copy -c:s copy -c:a copy -c:d copy)
@@ -143,13 +153,21 @@ while IFS= read -r -d '' f; do
     # Atomic Replace
     mv -- "${f%.mkv}-ac3.mkv" "$f"
     current_file=""  # Erfolgreich – Trap soll nicht löschen
+
+    # xattr nach erfolgreichem Replace neu setzen (Mtime hat sich durch mv geändert)
+    new_mtime=$(stat -c%Y "$f")
+    setfattr -n user.dts_check -v "$new_mtime" "$f"
+
     delta=$((orig_size - new_size))
     pct=$((delta * 100 / orig_size))
     echo "$(ts): Fertig. Ersparnis: ${delta}B (-${pct}%). Audio-Tracks: $audio_index." >> "$log"
 
+  else
+    # Keine problematischen Tracks – als geprüft markieren
+    setfattr -n user.dts_check -v "$current_mtime" "$f"
   fi
 
 done < <(find -L "${paths[@]}" -name "*.mkv" -print0 2>/dev/null)
 
 [ $dts_check -eq 0 ] && echo "$(ts): Kein DTS/TrueHD/Opus gefunden." >> "$log"
-echo "$(ts): Scan abgeschlossen. $dts_check Dateien bearbeitet." >> "$log"
+echo "$(ts): Scan abgeschlossen. $dts_check Dateien konvertiert, $skip_count übersprungen (xattr-Cache)." >> "$log"
