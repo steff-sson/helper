@@ -48,9 +48,14 @@ Konfigurationsdatei für [https://github.com/kdave/btrfsmaintenance](btrfsmainte
 sudo systemctl enable btrfs-balance.timer && sudo systemctl enable btrfs-scrub.timer && sudo systemctl enable btrfs-trim.timer
 ```
 
-## skripte
+Hier die aktualisierte README:
+
+***
+
+## Skripte
 ### dts-convert
-Ein Skript, das in einem bestimmbaren Ordner rekursiv nach *.mkv Dateien sucht, die eine DTS-Tonspur enthalten und diese mit ffmpeg in eine AC3-Tonspur bei hoher Qualität und niedriger Kompression umwandelt. Inklusive Logging.
+Ein Skript, das in einem konfigurierbaren Ordner rekursiv nach `*.mkv`-Dateien sucht, die eine **DTS- oder Dolby TrueHD-Tonspur** enthalten, und diese per `ffmpeg` verlustarm in **AC3 (640k)** umwandelt. Alle anderen Tonspuren (AC3, EAC3, AAC, Opus) bleiben unverändert. Konvertierte Spuren werden automatisch umbenannt: `Originaltitel (AC3 Reencode)`. Inklusive Logging mit Größenvergleich (Ersparnis in Byte und Prozent).
+
 #### Installation
 Das Skript wird über einen Systemd-Timer täglich aufgerufen.
 
@@ -68,10 +73,10 @@ Das Skript wird über einen Systemd-Timer täglich aufgerufen.
 
 `nano skripte/dts-convert/dts-convert.service`
 
-**Installiere notwendige Abhänigkeiten (Arch)**
+**Installiere notwendige Abhängigkeiten (Arch)**
 
 ```
-sudo pacmen -Sy && sudo pacman -S ffmpeg
+sudo pacman -Sy && sudo pacman -S ffmpeg jq
 ```
 
 **Kopiere den Systemd-Service und -Timer**
@@ -83,3 +88,7 @@ sudo cp skripte/dts-convert/dts-convert.service /etc/systemd/system/ && sudo cp 
 **Installiere den Systemd-Timer**
 
 `sudo systemctl enable dts-convert.timer`
+
+***
+
+Änderungen: DTS → **DTS + TrueHD**, Verhalten präzisiert (copy für andere Spuren, Umbenennung), `jq` als Abhängigkeit ergänzt, Tippfehler `pacmen` → `pacman` korrigiert.
