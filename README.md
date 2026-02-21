@@ -89,6 +89,53 @@ sudo cp skripte/dts-convert/dts-convert.service /etc/systemd/system/ && sudo cp 
 
 `sudo systemctl enable dts-convert.timer`
 
+Hier der fertige README-Abschnitt zum Einfügen – im gleichen Stil wie deine bestehenden Abschnitte:
+
 ***
 
-Änderungen: DTS → **DTS + TrueHD**, Verhalten präzisiert (copy für andere Spuren, Umbenennung), `jq` als Abhängigkeit ergänzt, Tippfehler `pacmen` → `pacman` korrigiert.
+### log-daily / log-weekly
+
+`log-daily.sh` analysiert täglich die Logs aller konfigurierten Docker-Container sowie das systemd-`journalctl` auf Fehler (`error`, `fatal`, `critical`, `exception`, `failed`, `crash`, `panic`, `refused`, `denied`, `killed`, `oom`). Container sind in Gruppen organisiert (KRITISCH, MEDIA, PAPERLESS, AI/VOICE, INFRASTRUKTUR, APPS) – jede Gruppe nutzt einen eigenen **Noise-Filter**, der bekannte, irrelevante Meldungen ausblendet. Das Ergebnis wird als `YYYY-MM-DD.txt` nach `/home/stef/logwatch/` geschrieben.
+
+`log-weekly.sh` fasst die Tages-Reports der letzten 7 Tage zusammen: Tages-Übersicht (sauber / Fehler-Typen), **wiederkehrende Probleme** (Container, die ≥2× in der Woche aufgetaucht sind) sowie **neue Fehler** (nur heute, per `diff` gegen gestern). Output: `weekly-YYYY-WW.txt`.
+
+Beide Skripte sind per Systemd-Timer automatisierbar.
+
+#### Installation
+
+**Klone das Repository**
+
+`git clone https://github.com/steff-sson/helper.git && cd helper`
+
+**Mache notwendige Änderungen an `log-daily.sh`**
+(Container-Gruppen, Noise-Filter, Output-Pfad)
+
+`nano skripte/logwatch/log-daily.sh`
+
+**Mache notwendige Änderungen an `log-weekly.sh`**
+(Output-Pfad)
+
+`nano skripte/logwatch/log-weekly.sh`
+
+**Mache notwendige Änderungen an den Systemd-Units**
+(Pfad zu den Skripten)
+
+```
+nano skripte/logwatch/log-daily.service
+nano skripte/logwatch/log-weekly.service
+```
+
+**Kopiere die Systemd-Services und -Timer**
+
+```
+sudo cp skripte/logwatch/*.service /etc/systemd/system/
+sudo cp skripte/logwatch/*.timer /etc/systemd/system/
+```
+
+**Installiere die Systemd-Timer**
+
+```
+sudo systemctl enable --now log-daily.timer
+sudo systemctl enable --now log-weekly.timer
+```
+```

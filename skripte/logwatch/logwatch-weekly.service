@@ -1,0 +1,8 @@
+[Unit]
+Description=Wöchentlicher Log-Report
+After=logwatch-daily.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/stef/github/helper/skripte/logwatch/log-weekly.sh
+User=stef

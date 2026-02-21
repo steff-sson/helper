@@ -1,0 +1,8 @@
+[Unit]
+Description=Tägliche Log-Analyse
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/stef/github/helper/skripte/logwatch/log-daily.sh
+User=stef
