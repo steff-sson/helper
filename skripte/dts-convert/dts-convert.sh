@@ -33,11 +33,17 @@ while IFS= read -r -d '' f; do
     # Non-DTS/TrueHD Audio copy
     map_cmd="$map_cmd -map 0:a -c:a copy"
 
-    # FFmpeg Aufruf (MJPEG-Warning unterdrückt)
+    # FFmpeg Aufruf (MJPEG-Warning unterdrückt, Fehlercheck)
     ffmpeg -i "$f" $map_cmd $audio_cmd \
       -avoid_negative_ts make_zero \
       "${f%.mkv}-ac3.mkv" -y \
-      -loglevel error 2>&1 | grep -v "mjpeg" >> $log
+      -loglevel error 2>&1 | grep -iv "mjpeg"
+
+    # Prüfen ob Output existiert
+    if [ ! -f "${f%.mkv}-ac3.mkv" ]; then
+      echo "$date: FEHLER – FFmpeg hat keine Ausgabedatei erzeugt für $f" >> $log
+      continue
+    fi
 
     # Atomic Replace + Size Check
     orig_size=$(stat -c%s "$f")
