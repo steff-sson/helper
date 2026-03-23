@@ -164,7 +164,7 @@ while IFS= read -r -d '' f; do
       audio_index=$((audio_index + 1))
     done < <(echo "$probe" | jq -r \
       '.streams[] | select(.codec_type=="audio") |
-      [.codec_name, (.tags.title // ""), (.tags.language // "")] | @tsv')
+      [.codec_name, (.tags.title // ""), (.tags.language // "und")] | @tsv')
 
     ffmpeg "${ffmpeg_args[@]}" "$tmp_mka" 2>&1 \
       | grep -iv "mjpeg" > /tmp/dts-ffmpeg.tmp
