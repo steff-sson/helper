@@ -93,6 +93,31 @@ Hier der fertige README-Abschnitt zum Einfügen – im gleichen Stil wie deine b
 
 ***
 
+### mp3-normalize
+Normalisiert MP3-Dateien für den DFPlayer Mini (TonUINO AiO): Nur Dateien mit inkompatiblen Parametern (Bitrate, Sample-Rate, VBR, ID3-Tags, APIC) werden per ffmpeg re-encodiert. xattr-Caching vermeidet Repeat-Scans. Täglicher Systemd-Timer auf `/volume1/daten/Hoerspiele`.
+
+#### Installation
+
+**Klone das Repository**
+
+`git clone https://github.com/steff-sson/helper.git && cd helper`
+
+**Kopiere den Systemd-Service und -Timer (user-level)**
+
+```
+cp skripte/mp3-normalize.service ~/.config/systemd/user/
+cp skripte/mp3-normalize.timer ~/.config/systemd/user/
+```
+
+**Aktiviere den Timer**
+
+```
+systemctl --user daemon-reload
+systemctl --user enable --now mp3-normalize.timer
+```
+
+**Abhängigkeiten:** `ffmpeg`, `ffprobe`, `python3`, `setfattr`/`getfattr` (optional, für xattr-Caching)
+
 ### log-daily / log-weekly
 
 `log-daily.sh` analysiert täglich die Logs aller konfigurierten Docker-Container sowie das systemd-`journalctl` auf Fehler (`error`, `fatal`, `critical`, `exception`, `failed`, `crash`, `panic`, `refused`, `denied`, `killed`, `oom`). Container sind in Gruppen organisiert (KRITISCH, MEDIA, PAPERLESS, AI/VOICE, INFRASTRUKTUR, APPS) – jede Gruppe nutzt einen eigenen **Noise-Filter**, der bekannte, irrelevante Meldungen ausblendet. Das Ergebnis wird als `YYYY-MM-DD.txt` nach `/home/stef/logwatch/` geschrieben.
