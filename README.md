@@ -73,25 +73,19 @@ Das Skript wird über einen Systemd-Timer täglich aufgerufen.
 
 `nano skripte/dts-convert/dts-convert.service`
 
-**Installiere notwendige Abhängigkeiten (Arch)**
+**Kopiere den Systemd-Service und -Timer (user-level)**
 
 ```
-sudo pacman -Sy && sudo pacman -S ffmpeg jq
+cp skripte/dts-convert/dts-convert.service ~/.config/systemd/user/
+cp skripte/dts-convert/dts-convert.timer ~/.config/systemd/user/
 ```
 
-**Kopiere den Systemd-Service und -Timer**
+**Aktiviere den Timer**
 
 ```
-sudo cp skripte/dts-convert/dts-convert.service /etc/systemd/system/ && sudo cp skripte/dts-convert/dts-convert.timer /etc/systemd/system/
+systemctl --user daemon-reload
+systemctl --user enable --now dts-convert.timer
 ```
-
-**Installiere den Systemd-Timer**
-
-`sudo systemctl enable dts-convert.timer`
-
-Hier der fertige README-Abschnitt zum Einfügen – im gleichen Stil wie deine bestehenden Abschnitte:
-
-***
 
 ### mp3-normalize
 Normalisiert MP3-Dateien für den DFPlayer Mini (TonUINO AiO): Nur Dateien mit inkompatiblen Parametern (Bitrate, Sample-Rate, VBR, ID3-Tags, APIC) werden per ffmpeg re-encodiert. xattr-Caching vermeidet Repeat-Scans. Täglicher Systemd-Timer auf `/volume1/daten/Hoerspiele`.
@@ -105,8 +99,8 @@ Normalisiert MP3-Dateien für den DFPlayer Mini (TonUINO AiO): Nur Dateien mit i
 **Kopiere den Systemd-Service und -Timer (user-level)**
 
 ```
-cp skripte/mp3-normalize.service ~/.config/systemd/user/
-cp skripte/mp3-normalize.timer ~/.config/systemd/user/
+cp skripte/mp3-normalize/mp3-normalize.service ~/.config/systemd/user/
+cp skripte/mp3-normalize/mp3-normalize.timer ~/.config/systemd/user/
 ```
 
 **Aktiviere den Timer**

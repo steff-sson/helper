@@ -1,0 +1,9 @@
+[Unit]
+Description=TonUINO MP3 Normalization (Hörspiel-Sammlung)
+
+[Service]
+Type=oneshot
+User=stef
+TimeoutStartSec=7200
+Environment=NORMALIZE_LOCKFILE=/tmp/mp3-normalize.lock
+ExecStart=/home/stef/github/helper/skripte/mp3-normalize.sh /volume1/daten/Hoerspiele

@@ -1,8 +1,8 @@
 [Unit]
-Description=dts-convert Service
+Description=Daily TonUINO MP3 normalization (03:00)
 
 [Timer]
-OnCalendar=*-*-* 05:30:00
+OnCalendar=*-*-* 03:00:00
 AccuracySec=10min
 Persistent=true
 
